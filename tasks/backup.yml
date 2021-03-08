@@ -1,0 +1,49 @@
+---
+- name: Create directory for backups
+  file:
+    path: '{{ mailtrain_backup_path }}'
+    state: directory
+    group: adm
+    mode: 0775
+
+- name: Create timer for PostgreSQL backup
+  include_role: name=systemd-timer
+  vars:
+    systemd_timer_name: '{{ mailtrain_backup_timer_name }}'
+    systemd_timer_description: 'Backup mailtrain PostgreSQL database as SQL.'
+    systemd_timer_user: '{{ mailtrain_backup_user }}'
+    systemd_timer_frequency: '{{ mailtrain_backup_frequency }}'
+    systemd_timer_timeout_sec: '{{ mailtrain_backup_timeout }}'
+    systemd_timer_work_dir: '{{ mailtrain_backup_path }}' 
+    systemd_timer_requires_extra: 'docker.service'
+    systemd_timer_start_on_creation: false
+    systemd_timer_script_content: |
+      #!/usr/bin/env bash
+      set -xe
+      TSTAMP=$(date -u +%Y%m%d%H%M%S)
+      MAX_KEPT={{ mailtrain_backup_max_kept }}
+      BKP_FILE="{{ mailtrain_db_cont_name | replace("-", "_") }}_dump_${TSTAMP}.sql"
+      echo "Creating: ${BKP_FILE}"
+      mysqldump \
+        --protocol=tcp \
+        --host=localhost \
+        --port={{ mailtrain_db_cont_port }} \
+        --user=root \
+        --password={{ mailtrain_db_root_pass }} \
+        --databases {{ mailtrain_db_name }} \
+        --column-statistics=0 \
+        > "${BKP_FILE}"
+      echo "Cleaning up old archives..."
+      rm -vf $(ls -Art | head -n -${MAX_KEPT})
+
+- name: Configure uploading backups
+  include_role:
+    name: s3cmd-upload
+  vars:
+    s3cmd_upload_name: '{{ mailtrain_service_name }}'
+    s3cmd_upload_timer_frequency: '{{ mailtrain_backup_frequency }}'
+    s3cmd_upload_directory: '{{ mailtrain_backup_path }}'
+    s3cmd_upload_bucket_name: '{{ mailtrain_s3cmd_bucket_name | mandatory }}'
+    s3cmd_upload_encryption_pass: '{{ mailtrain_s3cmd_encryption_pass | mandatory }}'
+    s3cmd_upload_access_key: '{{ mailtrain_s3cmd_access_key | mandatory }}'
+    s3cmd_upload_secret_key: '{{ mailtrain_s3cmd_secret_key | mandatory }}'

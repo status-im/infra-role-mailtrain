@@ -1,0 +1,62 @@
+---
+version: '3.7'
+services:
+  app:
+    container_name: '{{ mailtrain_app_cont_name }}'
+    image: '{{ mailtrain_app_cont_image }}'
+    restart: 'always'
+    environment:
+      NODE_ENV: 'production'
+    entrypoint: 'node index.js'
+    ports:
+      - '{{ mailtrain_app_cont_port }}:{{ mailtrain_app_cont_port }}/tcp'
+    volumes:
+      - '{{ mailtrain_app_cont_vol }}/config:/app/config'
+      - '{{ mailtrain_app_cont_vol }}/grapejs:/app/public/grapejs/uploads'
+      - '{{ mailtrain_app_cont_vol }}/mosaico:/app/public/mosaico/uploads'
+    depends_on:
+      - 'db'
+      - 'cache'
+
+  db:
+    container_name: '{{ mailtrain_db_cont_name }}'
+    image: '{{ mailtrain_db_cont_image }}'
+    user: root
+    restart: 'always'
+    env_file: '{{ mailtrain_service_path }}/db.env'
+    ports:
+      - '{{ mailtrain_db_cont_port }}:{{ mailtrain_db_cont_port }}/tcp'
+    tmpfs:
+      - '/tmp:rw,noexec,nosuid,size=50m'
+    volumes:
+      - '{{ mailtrain_db_cont_vol }}:/var/lib/mysql'
+
+  cache:
+    container_name: '{{ mailtrain_cache_cont_name }}'
+    image: '{{ mailtrain_cache_cont_image }}'
+    restart: 'always'
+    # docker-entrypoint.sh tries to chown /data which will not work
+    entrypoint: redis-server
+    volumes:
+      - '{{ mailtrain_cache_cont_vol }}:/data'
+
+  oauth:
+    container_name: '{{ mailtrain_oauth_cont_name }}'
+    image: '{{ mailtrain_oauth_cont_image }}'
+    user: 'root'
+    restart: 'always'
+    ports:
+      - '127.0.0.1:{{ mailtrain_oauth_cont_port }}:{{ mailtrain_oauth_cont_port }}' # Web UI
+    command: |
+      --email-domain='*'
+      --provider='github'
+      --github-org='{{ mailtrain_oauth_gh_org | mandatory }}'
+      --github-team='{{ mailtrain_oauth_gh_teams | join(",") }}'
+      --cookie-domain='{{ mailtrain_domain | mandatory }}'
+      --cookie-secret='{{ mailtrain_oauth_cookie_secret | mandatory }}'
+      --client-id='{{ mailtrain_oauth_id | mandatory }}'
+      --client-secret='{{ mailtrain_oauth_secret | mandatory }}'
+      --redirect-url='https://{{ mailtrain_domain }}/oauth2/callback'
+      --http-address='0.0.0.0:{{ mailtrain_oauth_cont_port | mandatory }}'
+      --upstream='http://app:{{ mailtrain_app_cont_port }}/'
+      --request-logging=false

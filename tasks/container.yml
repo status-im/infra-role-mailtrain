@@ -1,0 +1,19 @@
+---
+- name: Create compose file
+  template:
+    src: 'docker-compose.yml.j2'
+    dest: '{{ mailtrain_service_compose }}'
+    owner: 'dockremap'
+    group: 'docker'
+    mode: 0640
+
+- name: Create containers
+  docker_compose:
+    project_src: '{{ mailtrain_service_path }}'
+    pull: true
+    build: false
+    state: '{{ compose_state }}'
+    restarted: '{{ compose_restart }}'
+    recreate: |-
+      {{ (app_config.changed or db_env.changed)
+      | ternary("always", compose_recreate) }}

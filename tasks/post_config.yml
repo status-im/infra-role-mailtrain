@@ -1,0 +1,46 @@
+---
+- name: Install MySQL client
+  apt:
+    name:
+      - 'mysql-client'
+      - 'python3-passlib'
+
+- name: Run Admin password through bcrypt
+  command: >
+    python -c
+    'from passlib.hash import bcrypt;
+    print(bcrypt.using(ident="2a").hash("admin"))'
+  register: mailtrain_admin_pass_hashed
+
+- name: Create SQL config script
+  template:
+    src: 'settings.sql.j2'
+    dest: '{{ mailtrain_settings_script }}'
+    group: 'adm'
+    mode: 0640
+  vars:
+    mailtrain_smtp_settings:
+      mail_transport: 'smtp'
+      smtp_encryption: '{{ mailtrain_smtp_encryption | mandatory }}'
+      smtp_hostname: '{{ mailtrain_smtp_host | mandatory }}'
+      smtp_port: '{{ mailtrain_smtp_port | mandatory }}'
+      smtp_user: '{{ mailtrain_smtp_user | mandatory }}'
+      smtp_pass: '{{ mailtrain_smtp_pass | mandatory }}'
+      service_url: 'https://{{ mailtrain_domain | mandatory }}/'
+      admin_email: '{{ mailtrain_admin_email | mandatory }}'
+      default_sender: '{{ mailtrain_default_sender | mandatory }}'
+      default_from: '{{ mailtrain_default_from | mandatory }}'
+      default_address: '{{ mailtrain_default_address | mandatory }}'
+      default_subject: '{{ mailtrain_default_subject | mandatory }}'
+      default_homepage: '{{ mailtrain_homepage | mandatory }}'
+
+- name: Create SMTP config and Admin user
+  shell: |
+    mysql \
+      --protocol='tcp' \
+      --host='localhost' \
+      --port='{{ mailtrain_db_cont_port }}' \
+      --user='{{ mailtrain_db_user }}' \
+      --password='{{ mailtrain_db_pass }}' \
+      '{{ mailtrain_db_name }}' \
+      < '{{ mailtrain_settings_script }}'

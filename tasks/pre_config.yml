@@ -1,0 +1,39 @@
+---
+- name: Create container folders
+  file:
+    path: '{{ item }}'
+    owner: dockremap
+    group: docker
+    state: directory
+  with_items:
+    - '{{ mailtrain_service_path }}'
+    - '{{ mailtrain_app_cont_vol }}'
+    - '{{ mailtrain_app_cont_vol }}/config'
+    - '{{ mailtrain_cache_cont_vol }}'
+
+- name: Create database folder
+  file:
+    path: '{{ mailtrain_db_cont_vol }}'
+    owner: '{{ mailtrain_db_host_uid }}'
+    group: '{{ mailtrain_db_host_uid }}'
+    mode: 0770
+    state: directory
+    recurse: true
+
+- name: Create config file for app
+  template:
+    src: 'production.toml.j2'
+    dest: '{{ mailtrain_service_path }}/app/config/production.toml'
+    owner: 'dockremap'
+    group: 'docker'
+    mode: 0640
+  register: app_config
+
+- name: Create env file for db
+  template:
+    src: 'db.env.j2'
+    dest: '{{ mailtrain_service_path }}/db.env'
+    owner: 'dockremap'
+    group: 'docker'
+    mode: 0640
+  register: db_env

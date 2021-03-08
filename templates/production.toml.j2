@@ -1,0 +1,84 @@
+# Process title visible in monitoring logs and process listing
+title='mailtrain'
+
+# Enabled HTML editors
+editors = [
+  ['summernote', 'Summernote'],
+  ['grapejs', 'GrapeJS'],
+  ['mosaico', 'Mosaico'],
+  ['codeeditor', 'Code Editor']
+]
+
+language='en'
+
+[log]
+level='{{ mailtrain_app_log_level }}'
+
+[www]
+port={{ mailtrain_app_cont_port }}
+host='0.0.0.0'
+https=false
+secret='{{ mailtrain_cookie_secret }}'
+remember=2592000 # 30 days
+log='dev'
+proxy=true
+postsize="2MB"
+
+[mysql]
+host='db'
+port={{ mailtrain_db_cont_port }}
+user='{{ mailtrain_db_user }}'
+password='{{ mailtrain_db_pass }}'
+database='{{ mailtrain_db_name }}'
+charset='utf8mb4'
+timezone='local'
+
+[redis]
+enabled=true
+host='cache'
+port={{ mailtrain_cache_cont_port }}
+db={{ mailtrain_cache_db }}
+
+[queue]
+processes=5
+
+[cors]
+origins={{ mailtrain_cors_origins | to_yaml }}
+
+[mosaico]
+templates = [
+  ["versafix-1", "Versafix One"]
+]
+
+[grapejs]
+templates = [
+  ["demo", "HTML Template"],
+  ["aves", "MJML Template"]
+]
+
+[seleniumwebdriver]
+browser='phantomjs'
+
+[verp]
+enabled=false
+
+[ldap]
+enabled=false
+
+[ldapauth]
+enabled=false
+
+[postfixbounce]
+enabled=false
+
+[reports]
+enabled=false
+
+[testserver]
+enabled=false
+
+[builtinZoneMTA]
+enabled=false
+
+[nodemailer]
+#textEncoding="base64"

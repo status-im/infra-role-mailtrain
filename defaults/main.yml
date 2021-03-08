@@ -1,0 +1,87 @@
+---
+mailtrain_domain: ~
+mailtrain_service_name: mailtrain
+mailtrain_service_path: '/docker/{{ mailtrain_service_name }}'
+mailtrain_service_compose: '{{ mailtrain_service_path }}/docker-compose.yml'
+mailtrain_settings_script: '{{ mailtrain_service_path }}/mailtrain_settings.sql'
+
+# Admin user
+mailtrain_admin_user: 'admin'
+mailtrain_admin_pass: 'admin'
+mailtrain_admin_email: ~
+
+# CORS
+mailtrain_cors_origins: []
+# Session ID Cookies
+mailtrain_cookie_secret: 'changeMeIfYouCare'
+
+# App --------------------------------------------------------------------------
+mailtrain_app_cont_tag: 'v1.24.1'
+mailtrain_app_cont_image: 'statusteam/mailtrain:{{ mailtrain_app_cont_tag }}'
+mailtrain_app_cont_vol: '{{ mailtrain_service_path }}/app'
+mailtrain_app_cont_env: '{{ mailtrain_service_path }}/app.env'
+mailtrain_app_cont_name: '{{ mailtrain_service_name }}-app'
+mailtrain_app_cont_port: 3000
+mailtrain_app_log_level: 'info' # silly|verbose|info|http|warn|error|silent
+# DB ---------------------------------------------------------------------------
+mailtrain_db_cont_tag: '5.7'
+mailtrain_db_cont_image: 'mysql:{{ mailtrain_db_cont_tag }}'
+mailtrain_db_cont_vol: '{{ mailtrain_service_path }}/db'
+mailtrain_db_cont_env: '{{ mailtrain_service_path }}/db.env'
+mailtrain_db_cont_name: '{{ mailtrain_service_name }}-db'
+mailtrain_db_cont_port: 3306
+mailtrain_db_cont_uid: 999
+mailtrain_db_host_uid: '{{ 100000 + mailtrain_db_cont_uid | int }}'
+mailtrain_db_name: 'mailtrain'
+mailtrain_db_user: 'mailtrain'
+mailtrain_db_pass: 'changeMeIfYouCare'
+mailtrain_db_root_pass: 'changeMeIfYouCare'
+# Cache ------------------------------------------------------------------------
+mailtrain_cache_cont_tag: '3.0'
+mailtrain_cache_cont_image: 'redis:{{ mailtrain_cache_cont_tag }}'
+mailtrain_cache_cont_vol: '{{ mailtrain_service_path }}/cache'
+mailtrain_cache_cont_env: '{{ mailtrain_service_path }}/cache.env'
+mailtrain_cache_cont_name: '{{ mailtrain_service_name }}-cache'
+mailtrain_cache_cont_port: 6379
+mailtrain_cache_db: '0'
+# OAuth ------------------------------------------------------------------------
+mailtrain_oauth_cont_tag: 'v5.0.0'
+mailtrain_oauth_cont_image: 'quay.io/pusher/oauth2_proxy:{{ mailtrain_oauth_cont_tag }}'
+mailtrain_oauth_cont_name: '{{ mailtrain_service_name }}-oauth'
+mailtrain_oauth_cont_port: 8093
+mailtrain_oauth_gh_org: ~
+mailtrain_oauth_gh_teams: []
+mailtrain_oauth_id: ~
+mailtrain_oauth_secret: ~
+mailtrain_oauth_cookie_secret: ~
+# ------------------------------------------------------------------------------
+
+# Mail
+mailtrain_default_sender: ~
+mailtrain_default_from: ~
+mailtrain_default_address: ~
+mailtrain_default_subject: 'Default Subject'
+# SMTP configuration
+mailtrain_smtp_host: ~
+mailtrain_smtp_port: ~
+mailtrain_smtp_user: ~
+mailtrain_smtp_pass: ~
+mailtrain_smtp_encryption: ~
+
+# Backup
+mailtrain_backup_path: '/var/backups/{{ mailtrain_service_name }}'
+mailtrain_backup_user: 'root'
+mailtrain_backup_timer_name: 'backup-{{ mailtrain_service_name }}'
+mailtrain_backup_frequency: 'daily'
+mailtrain_backup_timeout: 120
+mailtrain_backup_max_kept: 14
+# S3cmd uploads
+mailtrain_s3cmd_bucket_name: ~
+mailtrain_s3cmd_encryption_pass: ~
+mailtrain_s3cmd_access_key: ~
+mailtrain_s3cmd_secret_key: ~
+
+# general container management
+compose_recreate: 'smart'
+compose_state: 'present'
+compose_restart: false

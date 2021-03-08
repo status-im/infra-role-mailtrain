@@ -1,0 +1,8 @@
+{% for key,val in mailtrain_smtp_settings.items() %}
+UPDATE settings AS s SET s.value = '{{ val }}' WHERE s.key = '{{ key }}';
+{% endfor %}
+UPDATE users AS u SET
+  u.username = '{{ mailtrain_admin_user }}',
+  u.password = '{{ mailtrain_admin_pass_hashed.stdout | trim }}',
+  u.email = '{{ mailtrain_admin_email }}'
+WHERE u.username = 'admin';
